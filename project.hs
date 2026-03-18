@@ -51,7 +51,7 @@ main = do
 
         putStrLn "What do you want to do?\n 1. stand \n 2. hit\n 3. double down"
         decision <- getLine
-        players_deck, play_deck = play(decision, players_cards)
+        let (players_deck, play_deck) = play(decision, players_cards)
         if value > 21 then
             putstring "You lose"
         else 
