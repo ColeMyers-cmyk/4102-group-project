@@ -1,11 +1,17 @@
 import System.Exit (exitSuccess)
 import Text.Read (readMaybe)
+import System.Random (randomRIO)
 
 getSpecificElements :: [Int] -> [a] -> [a]
 getSpecificElements indices list = [list !! i | i <- indices]
 
-shuffle :: [String] -> IO [String]
-shuffle deck = return deck
+shuffle :: [a] -> IO [a]
+shuffle [] = return []
+shuffle xs = do
+    i <- randomRIO (0, length xs - 1)
+    let (left, (a:right)) = splitAt i xs
+    rest <- shuffle (left ++ right)
+    return (a : rest)
 
 deal :: [a] -> ([a], [a], [a])
 deal play_deck =
@@ -83,17 +89,14 @@ playerTurn players_cards play_deck currentBet = do
             Just decision ->
                 if decision == 1 then
                     return (players_cards, play_deck, currentBet)
-
                 else if decision == 2 then do
                     let (new_players_cards, new_play_deck) = play decision players_cards play_deck
                     playerTurn new_players_cards new_play_deck currentBet
-
                 else if decision == 3 then do
                     let (new_players_cards, new_play_deck) = play decision players_cards play_deck
                     let doubledBet = currentBet * 2
                     putStrLn $ "Double down selected. Bet is now $" ++ show doubledBet
                     return (new_players_cards, new_play_deck, doubledBet)
-
                 else do
                     putStrLn "wrong input"
                     playerTurn players_cards play_deck currentBet
@@ -111,24 +114,35 @@ main = do
     ans <- getLine
 
     if ans == "Y" || ans == "y" then do
+        putStrLn "let's begin\n---shuffling deck---"
         play_deck <- shuffle deck
+        putStrLn "---dealing cards---"
+
         let (players_cards, dealers_cards, remaining_deck) = deal play_deck
+
+        putStrLn $ "you got the " ++ (players_cards !! 0)
+        putStrLn $ "you got the " ++ (players_cards !! 1) ++ "\n"
+
+        putStrLn $ "Dealer shows: " ++ head dealers_cards
 
         (final_players_cards, final_play_deck, final_bet) <- playerTurn players_cards remaining_deck startingBet
 
-        if handValue final_players_cards > 21 then
-            putStrLn $ "You lose. Loss: $" ++ show final_bet
-        else do
-            let (final_dealers_cards, _) = dealerPlay dealers_cards final_play_deck
+        let (final_dealers_cards, _) = dealerPlay dealers_cards final_play_deck
 
-            if handValue final_dealers_cards > 21 then
-                putStrLn $ "You win!!! Payout: $" ++ show final_bet
-            else if handValue final_players_cards > handValue final_dealers_cards then
-                putStrLn $ "You win!!! Payout: $" ++ show final_bet
-            else if handValue final_players_cards < handValue final_dealers_cards then
-                putStrLn $ "Dealer wins. Loss: $" ++ show final_bet
-            else
-                putStrLn $ "Push (tie). Bet returned: $" ++ show final_bet
+        putStrLn "\nDealer's hand:"
+        mapM_ putStrLn final_dealers_cards
+        putStrLn $ "Dealer value: " ++ show (handValue final_dealers_cards)
+
+        if handValue final_players_cards > 21 then
+            putStrLn $ "Dealer wins\nLoss: $" ++ show final_bet
+        else if handValue final_dealers_cards > 21 then
+            putStrLn $ "You win\nPayout: $" ++ show final_bet
+        else if handValue final_players_cards > handValue final_dealers_cards then
+            putStrLn $ "You win\nPayout: $" ++ show final_bet
+        else if handValue final_players_cards < handValue final_dealers_cards then
+            putStrLn $ "Dealer wins\nLoss: $" ++ show final_bet
+        else
+            putStrLn $ "Push (tie)\nBet returned: $" ++ show final_bet
 
     else
         putStrLn "Goodbye."
