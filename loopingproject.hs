@@ -102,44 +102,43 @@ playerTurn players_cards play_deck = do
                     playerTurn players_cards play_deck
 
 
-gameloop :: [string] -> IO
-gameloop play_deck
-    if length play_deck < 4
-        do
-        play_deck <- shuffle deck
-    do
-        let (players_cards, dealers_cards, remaining_deck) = deal play_deck
+gameloop :: [String] -> IO ()
+gameloop play_deck = do
+    new_deck <- if length play_deck < 4
+        then shuffle deck
+        else return play_deck
+    let (players_cards, dealers_cards, remaining_deck) = deal new_deck
 
-            putStrLn $ "you got the " ++ (players_cards !! 0)
-            putStrLn $ "you got the " ++ (players_cards !! 1) ++ "\n"
+    putStrLn $ "you got the " ++ (players_cards !! 0)
+    putStrLn $ "you got the " ++ (players_cards !! 1) ++ "\n"
 
-            let dealer_show = [head dealers_cards]
-            putStrLn $ "Dealer shows: " ++ head dealer_show
+    let dealer_show = [head dealers_cards]
+    putStrLn $ "Dealer shows: " ++ head dealer_show
 
-            (final_players_cards, final_play_deck) <- playerTurn players_cards remaining_deck
+    (final_players_cards, final_play_deck) <- playerTurn players_cards remaining_deck
 
-            if handValue final_players_cards > 21 then
-                putStrLn "You lose"
-            else do
-                if handValue final_players_cards == 21 then
-                    putStrLn "You have 21!"
-                else
-                    putStrLn "Player stands."
+    if handValue final_players_cards > 21 then
+        putStrLn "You lose"
+    else do
+        if handValue final_players_cards == 21 then
+            putStrLn "You have 21!"
+        else
+            putStrLn "Player stands."
 
-                let (final_dealers_cards, _) = dealerPlay dealers_cards final_play_deck
+        let (final_dealers_cards, _) = dealerPlay dealers_cards final_play_deck
 
-                putStrLn "\nDealer's hand:"
-                mapM_ putStrLn final_dealers_cards
-                putStrLn $ "Dealer value: " ++ show (handValue final_dealers_cards)
+        putStrLn "\nDealer's hand:"
+        mapM_ putStrLn final_dealers_cards
+        putStrLn $ "Dealer value: " ++ show (handValue final_dealers_cards)
 
-                if handValue final_dealers_cards > 21 then
-                    putStrLn "You win!!!"
-                else if handValue final_players_cards > handValue final_dealers_cards then
-                    putStrLn "You win!!!"
-                else if handValue final_players_cards < handValue final_dealers_cards then
-                    putStrLn "Dealer wins"
-                else
-                    putStrLn "Push (tie)"
+        if handValue final_dealers_cards > 21 then
+            putStrLn "You win!!!"
+        else if handValue final_players_cards > handValue final_dealers_cards then
+            putStrLn "You win!!!"
+        else if handValue final_players_cards < handValue final_dealers_cards then
+            putStrLn "Dealer wins"
+        else
+            putStrLn "Push (tie)"
 
 
 
